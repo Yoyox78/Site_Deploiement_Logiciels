@@ -1,0 +1,42 @@
+- name: affichage de product
+  ansible.builtin.debug:
+    msg: "{{ product }}"
+
+- name: Récupération du nom du logiciel en 64 bits
+  ansible.windows.win_powershell:
+    script: |
+      Get-childitem -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall" -name | where-object {$_.PSChildName -match "{{ product }}"}
+  register: softuninst64
+
+- name: Affichage de la variable softuninst64 
+  ansible.builtin.debug:
+    msg: "{{ softuninst64.output }}"
+
+- name: Récupération du nom du logiciel en 32 bits, le 64 n'a rien donnée
+  ansible.windows.win_powershell:
+    script: |
+      Get-childitem -Path "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall" -name | where-object {$_.PSChildName -match "{{ product }}"}
+  register: softuninst32
+  when: softuninst64.output == ""
+
+- name: Affichage de la variable softuninst32 
+  ansible.builtin.debug:
+    msg: "{{ softuninst32.output }}"
+  when: softuninst64.output == ""
+
+- name: Creation de la variable final
+  ansible.builtin.set_fact:
+    softuninst: "{{ softuninst32.output if softuninst64.output == '' else softuninst64.output }}"
+
+# Le join sert à enlever les double cote et les accolade en passant en string
+- name: Affichage de la variable softuninst
+  ansible.builtin.debug:
+    msg: "{{ softuninst | join('') }}"
+
+- name: "Remove {{ soft }}"
+  ansible.windows.win_package:
+    product_id: "{{ softuninst | join('') }}"
+    arguments: "{{ argunin }}"
+    state: absent
+    wait_for_children: true
+  when: softuninst | join('') != ""

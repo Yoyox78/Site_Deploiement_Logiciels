@@ -1,0 +1,7 @@
+- name: "Suppression du logiciel"
+  hosts: all
+  vars_files: "logiciels/{{ package_name }}.yaml"
+  tasks:
+    - include_tasks: removelogiciel.yaml
+      vars:
+        soft: "{{ package_name }}"

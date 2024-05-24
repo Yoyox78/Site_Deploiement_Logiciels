@@ -1,0 +1,4 @@
+url: 'https://github.com/notepad-plus-plus/notepad-plus-plus/releases/download/v8.5.2/npp.8.5.2.Installer.x64.exe'
+arg: '/S /noUpdater'
+argunin: '/S'
+product: Notepad\+\+

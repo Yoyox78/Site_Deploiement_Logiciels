@@ -1,0 +1,15 @@
+- name: "Download {{ soft }}"
+  ansible.windows.win_get_url:
+    url: '{{ url }}'
+    dest: '{{ansible_env.TEMP}}\{{ soft }}.exe'
+
+- name: "Install {{ soft }}"
+  ansible.windows.win_package:
+    path: '{{ansible_env.TEMP}}\{{ soft }}.exe'
+    arguments: '{{ arg }}'
+    state: present
+
+- name: "Supression de l'executable {{ soft }}.exe"
+  ansible.windows.win_file:
+    path: '{{ansible_env.TEMP}}\{{ soft }}.exe'
+    state: absent

@@ -1,0 +1,8 @@
+# ansible-playbook -i 10.32.220.42, -e package_name=firefox test_win_logiciel.yaml -u usrAdminPC -e ansible_shell_type=powershell -e ansible_connection=ssh
+- name: "Installation du logiciel"
+  hosts: all
+  vars_files: "logiciels/{{ package_name }}.yaml"
+  tasks:
+    - include_tasks: logiciel.yaml
+      vars:
+        soft: "{{ package_name }}"

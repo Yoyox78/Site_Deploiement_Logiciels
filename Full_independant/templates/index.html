@@ -1,0 +1,111 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <style>
+          .right {text-align: end;}
+	  .response { font-size: 18px;}
+          .container {display: flex; justify-content: space-between; align-items: center; padding: 5px;}
+        </style>
+        <meta http-equiv="Content-type" content="text/html;charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="{{ url_for('static', filename= 'css/main.css') }}" type="text/css" />
+        <link rel="stylesheet" href="{{ url_for('static', filename= 'css/blog.css') }}" type="text/css" />
+        <title>Installation de logiciels</title>
+        <script src="{{ url_for('static', filename= 'js/jquery.min.js') }}"></script>
+    </head>
+    <body>
+        <div id="divbodyholder">
+        <div class="headerholder"><div class="header">
+        <div id="title">
+        <h1 class="nomargin"><a class="ablack">Installation de logiciels</a></h1>
+        <div id="description">Deploiement de logiciels</div>
+        </div></div></div>
+        <div id="divbody"><div class="content">
+            <div class="wrapper">
+                <script src="{{ url_for('static', filename= 'js/chart.js') }}"></script>
+                <tr>
+                <td>
+	        <br>
+                {%for i in range(0, len)%}
+                    <div id="{{logiciels[i]}}" class="container" > 
+		      <h2>{{logiciels[i]}}<h2>
+ 		      <button id="bt-{{logiciels[i]}}" onclick="installSoftware('{{logiciels[i]}}')">Installer</button>
+          <button id="btrm-{{logiciels[i]}}" onclick="removeSoftware('{{logiciels[i]}}')">Supprimer</button>
+		    </div> 
+                    <div class="response" id="response-{{logiciels[i]}}"></div> 
+                {%endfor%} 
+            </div>
+        </div>
+    </body>
+    <script>
+      function installSoftware(logiciel) {
+        button = document.getElementById("bt-" + logiciel);
+        button.disabled = true;
+        console.log(button)
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", "/deploy?logiciel=" + encodeURIComponent(logiciel), true);
+        xhr.onload = function() {
+          if (xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            var status = JSON.stringify(response.status);
+            var stdout = JSON.stringify(response.stdout);
+	    var error = status + stdout
+	    // console.log(stdout)
+            var stdoutbr = error.replace(/(\\n)/gm, '<br>');
+            regex = new RegExp('success');
+	    if (regex.test(status))
+	    { 
+	      document.getElementById('response-' + logiciel).style.backgroundColor = 'green';
+	      document.getElementById("response-" + logiciel).textContent = status.replace(/\"success\"\"/, 'Installation réussie');
+ 	      button.disabled = false;
+            }
+	    else
+	    {
+   	      document.getElementById('response-' + logiciel).style.backgroundColor = 'red';
+              document.getElementById("response-" + logiciel).innerHTML = stdoutbr.replace(/\"failure\"\"/, 'Erreur lors de l\'installation <br>');;	      
+              button.disabled = false;
+	    }
+          } else {
+            alert("Erreur lors de l'installation : " + xhr.status);
+          }
+        };
+          xhr.send();
+      }
+      
+      function removeSoftware(logiciel) {
+        button = document.getElementById("btrm-" + logiciel);
+        button.disabled = true;
+        console.log(button)
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", "/remove?logiciel=" + encodeURIComponent(logiciel), true);
+        xhr.onload = function() {
+          if (xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            var status = JSON.stringify(response.status);
+            var stdout = JSON.stringify(response.stdout);
+	    var error = status + stdout
+	    // console.log(stdout)
+            var stdoutbr = error.replace(/(\\n)/gm, '<br>');
+            regex = new RegExp('success');
+	    if (regex.test(status))
+	    { 
+	      document.getElementById('response-' + logiciel).style.backgroundColor = 'green';
+	      document.getElementById("response-" + logiciel).textContent = status.replace(/\"success\"\"/, 'Installation réussie');
+ 	      button.disabled = false;
+            }
+	    else
+	    {
+   	      document.getElementById('response-' + logiciel).style.backgroundColor = 'red';
+              document.getElementById("response-" + logiciel).innerHTML = stdoutbr.replace(/\"failure\"\"/, 'Erreur lors de l\'installation <br>');;	      
+              button.disabled = false;
+	    }
+          } else {
+            alert("Erreur lors de l'installation : " + xhr.status);
+          }
+        };
+          xhr.send();
+      }
+    </script>
+</html>
+
+
