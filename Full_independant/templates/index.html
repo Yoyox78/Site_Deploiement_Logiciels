@@ -29,7 +29,7 @@
                 {%for i in range(0, len)%}
                     <div id="{{logiciels[i]}}" class="container" > 
 		      <h2>{{logiciels[i]}}<h2>
- 		      <button id="bt-{{logiciels[i]}}" onclick="installSoftware('{{logiciels[i]}}')">Installer</button>
+ 		      <button id="bt-{{logiciels[i]}}" onclick="installSoftware('{{logiciels[i]}}')">Installer/MAJ</button>
           <button id="btrm-{{logiciels[i]}}" onclick="removeSoftware('{{logiciels[i]}}')">Supprimer</button>
 		    </div> 
                     <div class="response" id="response-{{logiciels[i]}}"></div> 
