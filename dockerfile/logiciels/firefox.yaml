@@ -1,0 +1,4 @@
+url: 'https://download.mozilla.org/?product=firefox-latest-ssl&os=win64&lang=fr'
+arg: '/S'
+argunin: '/S'
+product: ^Mozilla\sFirefox.*$
