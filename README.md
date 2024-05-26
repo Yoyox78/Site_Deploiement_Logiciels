@@ -4,4 +4,4 @@ Permet de deployer des logiciels via un site web sans avoir besoin de droit admi
 # dockerfile
 Le dockerfile contient l'essentiel pour la création du container
 
-Dans tout les cas, suivre la doc : https://blog.chezme.eu/pages/documentation/deploiement-logiciel-windows-via-url
+Dans tout les cas, suivre la doc : https://blog.chezme.eu/fr/deploiement-logiciel-windows-via-url
