@@ -11,7 +11,7 @@ WORKDIR /root
 RUN apk update && apk upgrade
 
 # On install le necessaire pour utiliser le site
-RUN apk add python3 py3-pip py3-gunicorn ansible-core unzip py3-flask
+RUN apk add python3 py3-pip py3-gunicorn ansible unzip py3-flask
 
 # On aura besoin de ansible-runner pour lancer les playbook depuis le site
 RUN pip install ansible-runner --break-system-packages
