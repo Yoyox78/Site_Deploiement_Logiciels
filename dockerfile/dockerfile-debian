@@ -1,24 +1,40 @@
+# On récup la dernière version de debian
 FROM debian:latest
 
+# Par defaut l'utilisateur Windows utilisé sera Administrateur, vous pourrez le changer ici ou dans la ligne de commande du lancement du container
 ENV USER administrateur
 
+# On va travailler dans /root
 WORKDIR /root
+# On met a jour les depot et soft de debian
 RUN apt update && apt upgrade -y
+# On install le necessaire pour utiliser le site et pour le deploiement des logiciels
 RUN apt install python3 ansible python3-ansible-runner python3-flask gunicorn3 git -y
+# On nettoie le cache et on supprime l'inutile
 RUN apt clean && apt autoremove
+# On récupère le site de deploiement
 RUN git clone https://github.com/Yoyox78/Site_Deploiement_Logiciels 
 
+
 WORKDIR /root/Site_Deploiement_Logiciels 
+#On déplace le site dans /etc
 RUN mv Full_independant /etc/Deploiement_Logiciel
 WORKDIR /root/
+# On supprime l'inutile
 RUN rm -rf Site_Deploiement_Logiciels 
 
+# On crée le répertoire .ssh pour la clé privée qui servira à se connecter au windows 
 RUN mkdir /root/.ssh/
+# on copie la clé privée
 COPY id_* /root/.ssh/
+# On modifie les droits
 RUN chmod 600 /root/.ssh/id_*
+# On change l'utilisateur par celui defini au debut dans le fichier app.py
 RUN sed -i "s@useradm = \"USRADM\"@useradm = os.environ.get('USER', 'default_value')@" /etc/Deploiement_Logiciel/app.py
 
+# On s'expose sur le port 80, pas d'interet a etre sur le port 443, rien de sensible
 EXPOSE 80
 WORKDIR /etc/Deploiement_Logiciel
+# On démarre le serveur gunicorn au démarrage, augmenté le timeout si les appli prenne du temps à s'installer et que vous avez une erreur (voir https://chezme.eu/deploiement-logiciel-windows-via-url)
 ENTRYPOINT /usr/bin/gunicorn -w 1 -b 0.0.0.0:80 --timeout 600 app:app
 
