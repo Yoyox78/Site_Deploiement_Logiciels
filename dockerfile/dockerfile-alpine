@@ -1,31 +1,50 @@
+# On télécharge la dernière alpine
 FROM alpine:latest
 
+# Par defaut l'utilisateur Windows utilisé sera Administrateur, vous pourrez le changer ici ou dans la ligne de commande du lancement du container
 ENV USER administrateur
 
+# On va travailler dans /root
 WORKDIR /root
 
+# On met a jour les depot et soft de alpine
 RUN apk update && apk upgrade
 
+# On install le necessaire pour utiliser le site
 RUN apk add python3 py3-pip py3-gunicorn ansible-core unzip py3-flask
 
+# On aura besoin de ansible-runner pour lancer les playbook depuis le site
 RUN pip install ansible-runner --break-system-packages
 
+# On télécharge le site et les dockerfile
 ADD https://github.com/Yoyox78/Site_Deploiement_Logiciels/archive/refs/heads/main.zip /root/main.zip
 
+# On extrait les fichiers
 RUN unzip /root/main.zip -d /root/
 
+# On entre dans le dossier
 WORKDIR /root/Site_Deploiement_Logiciels-main 
+
+#On déplace le site dans /etc
 RUN mv Full_independant /etc/Deploiement_Logiciel
 
 WORKDIR /root/
+
+# On supprime l'inutile
 RUN rm -rf Site_Deploiement_Logiciels* main.zip
 
+# On crée le répertoire .ssh pour la clé privée qui servira à se connecter au windows 
 RUN mkdir /root/.ssh/
+# on copie la clé privée
 COPY id_* /root/.ssh/
+# On modifie les droits
 RUN chmod 600 /root/.ssh/id_*
+# On change l'utilisateur par celui defini au debut dans le fichier app.py
 RUN sed -i "s@useradm = \"USRADM\"@useradm = os.environ.get('USER', 'default_value')@" /etc/Deploiement_Logiciel/app.py
 
+# On s'expose sur le port 80, pas d'interet a etre sur le port 443, rien de sensible
 EXPOSE 80
 WORKDIR /etc/Deploiement_Logiciel
+# On démarre le serveur gunicorn au démarrage, augmenté le timeout si les appli prenne du temps à s'installer et que vous avez une erreur (voir https://chezme.eu/deploiement-logiciel-windows-via-url)
 ENTRYPOINT /usr/bin/gunicorn -w 1 -b 0.0.0.0:80 --timeout 600 app:app
 
