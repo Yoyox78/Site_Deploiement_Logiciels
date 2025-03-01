@@ -11,10 +11,22 @@ WORKDIR /root
 RUN apk update && apk upgrade
 
 # On install le necessaire pour utiliser le site
-RUN apk add python3 py3-pip py3-gunicorn ansible unzip py3-flask
+RUN apk add python3 py3-pip py3-gunicorn ansible-core unzip py3-flask openssh-client
 
 # On aura besoin de ansible-runner pour lancer les playbook depuis le site
 RUN pip install ansible-runner --break-system-packages
+
+# Création du repertoire de collection
+RUN mkdir -p /usr/share/ansible/collections/ansible_collections/ansible/
+
+# Téléchargement de la collection windows
+ADD https://github.com/ansible-collections/ansible.windows/archive/refs/heads/main.zip /root/ansible-windows.zip
+
+# Ajout de la collection windows
+RUN unzip /root/ansible-windows.zip -d /usr/share/ansible/collections/ansible_collections/ansible/
+
+# Modification du nom du repertoire
+RUN mv /usr/share/ansible/collections/ansible_collections/ansible/ansible.windows-main /usr/share/ansible/collections/ansible_collections/ansible/windows
 
 # On télécharge le site et les dockerfile
 ADD https://github.com/Yoyox78/Site_Deploiement_Logiciels/archive/refs/heads/main.zip /root/main.zip
@@ -47,4 +59,3 @@ EXPOSE 80
 WORKDIR /etc/Deploiement_Logiciel
 # On démarre le serveur gunicorn au démarrage, augmenté le timeout si les appli prenne du temps à s'installer et que vous avez une erreur (voir https://chezme.eu/deploiement-logiciel-windows-via-url)
 ENTRYPOINT /usr/bin/gunicorn -w 1 -b 0.0.0.0:80 --timeout 600 app:app
-
