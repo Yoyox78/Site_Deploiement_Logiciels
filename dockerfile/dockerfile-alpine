@@ -43,7 +43,7 @@ RUN mv Full_independant /etc/Deploiement_Logiciel
 WORKDIR /root/
 
 # On supprime l'inutile
-RUN rm -rf Site_Deploiement_Logiciels* main.zip
+RUN rm -rf Site_Deploiement_Logiciels* main.zip ansible-windows.zip
 
 # On crée le répertoire .ssh pour la clé privée qui servira à se connecter au windows 
 RUN mkdir /root/.ssh/
