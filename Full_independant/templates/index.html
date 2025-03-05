@@ -1,111 +1,189 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" 
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
-    <head>
-        <style>
-          .right {text-align: end;}
-	  .response { font-size: 18px;}
-          .container {display: flex; justify-content: space-between; align-items: center; padding: 5px;}
-        </style>
-        <meta http-equiv="Content-type" content="text/html;charset=UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link rel="stylesheet" href="{{ url_for('static', filename= 'css/main.css') }}" type="text/css" />
-        <link rel="stylesheet" href="{{ url_for('static', filename= 'css/blog.css') }}" type="text/css" />
-        <title>Installation de logiciels</title>
-        <script src="{{ url_for('static', filename= 'js/jquery.min.js') }}"></script>
-    </head>
-    <body>
-        <div id="divbodyholder">
-        <div class="headerholder"><div class="header">
-        <div id="title">
-        <h1 class="nomargin"><a class="ablack">Installation de logiciels</a></h1>
-        <div id="description">Deploiement de logiciels</div>
-        </div></div></div>
-        <div id="divbody"><div class="content">
-            <div class="wrapper">
-                <script src="{{ url_for('static', filename= 'js/chart.js') }}"></script>
-                <tr>
-                <td>
-	        <br>
-                {%for i in range(0, len)%}
-                    <div id="{{logiciels[i]}}" class="container" > 
-		      <h2>{{logiciels[i]}}<h2>
- 		      <button id="bt-{{logiciels[i]}}" onclick="installSoftware('{{logiciels[i]}}')">Installer/MAJ</button>
-          <button id="btrm-{{logiciels[i]}}" onclick="removeSoftware('{{logiciels[i]}}')">Supprimer</button>
-		    </div> 
-                    <div class="response" id="response-{{logiciels[i]}}"></div> 
-                {%endfor%} 
-            </div>
+  <head>
+    <meta http-equiv="Content-type" content="text/html;charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Installation de logiciels</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" type="text/css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/blog.css') }}" type="text/css" />
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <style>
+      /* Pour la réponse */
+      .response { 
+        font-size: 18px; 
+        margin: 5px 0;
+      }
+      /* Le conteneur prend toute la largeur */
+      .container {
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center;
+        width: 100%;
+        padding: 5px;
+        box-sizing: border-box;
+      }
+      /* Le titre prend toute la largeur restante (pour forcer le push) */
+      .container h2 {
+        margin: 0;
+        flex: 1;
+      }
+      /* Le groupe de boutons est aligné à droite */
+      .btn-group {
+        display: flex;
+        align-items: center;
+      }
+      button {
+        padding: 5px 10px;
+        cursor: pointer;
+        margin-left: 5px;
+      }
+      /* Spinner */
+      .spinner {
+        display: inline-block;
+        width: 24px;
+        height: 24px;
+        border: 3px solid rgba(0, 0, 0, 0.2);
+        border-top-color: rgba(0, 0, 0, 0.8);
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+        margin-left: 10px;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      .hidden { display: none; }
+      /* Pour éviter d'avoir un padding par défaut sur le td */
+      td { padding: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="divbodyholder">
+      <div class="headerholder">
+        <div class="header">
+          <div id="title">
+            <h1 class="nomargin"><a class="ablack" href="#">Installation de logiciels</a></h1>
+            <div id="description">Déploiement de logiciels</div>
+          </div>
         </div>
-    </body>
+      </div>
+      <div id="divbody">
+        <div class="content">
+          <div class="wrapper">
+            <script src="{{ url_for('static', filename='js/chart.js') }}"></script>
+            <!-- Structure en tableau pour afficher les logiciels -->
+            <table style="width: 100%;">
+              <tbody>
+                {% for i in range(0, len) %}
+                <tr>
+                  <td>
+                    <div id="{{logiciels[i]}}" class="container">
+                      <h2>{{logiciels[i]}}</h2>
+                      <div class="btn-group">
+                        <button id="bt-{{logiciels[i]}}"
+                          onclick="installSoftware('{{logiciels[i]}}')">
+                          Installer/MAJ
+                        </button>
+                        <button id="btrm-{{logiciels[i]}}"
+                          onclick="removeSoftware('{{logiciels[i]}}')">
+                          Supprimer
+                        </button>
+                        <!-- Spinner associé au logiciel -->
+                        <span id="spinner-{{logiciels[i]}}" class="spinner hidden"></span>
+                      </div>
+                    </div>
+                    <div class="response" id="response-{{logiciels[i]}}"></div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
     <script>
+      // Affichage/Masquage du spinner
+      function toggleSpinner(logiciel, show) {
+        var spinner = document.getElementById("spinner-" + logiciel);
+        if (!spinner) {
+          console.error("Spinner introuvable pour", logiciel);
+          return;
+        }
+        if (show) {
+          spinner.classList.remove("hidden");
+        } else {
+          spinner.classList.add("hidden");
+        }
+      }
+
+      // Activation/Désactivation des boutons
+      function toggleButtons(logiciel, disable) {
+        var btnInstall = document.getElementById("bt-" + logiciel);
+        var btnRemove  = document.getElementById("btrm-" + logiciel);
+        if(btnInstall) { btnInstall.disabled = disable; }
+        if(btnRemove)  { btnRemove.disabled = disable; }
+      }
+
       function installSoftware(logiciel) {
-        button = document.getElementById("bt-" + logiciel);
-        button.disabled = true;
-        console.log(button)
+        toggleButtons(logiciel, true);
+        toggleSpinner(logiciel, true);
+
         var xhr = new XMLHttpRequest();
         xhr.open("GET", "/deploy?logiciel=" + encodeURIComponent(logiciel), true);
         xhr.onload = function() {
           if (xhr.status === 200) {
             var response = JSON.parse(xhr.responseText);
-            var status = JSON.stringify(response.status);
-            var stdout = JSON.stringify(response.stdout);
-	    var error = status + stdout
-	    // console.log(stdout)
-            var stdoutbr = error.replace(/(\\n)/gm, '<br>');
-            regex = new RegExp('success');
-	    if (regex.test(status))
-	    { 
-	      document.getElementById('response-' + logiciel).style.backgroundColor = 'green';
-	      document.getElementById("response-" + logiciel).textContent = status.replace(/\"success\"\"/, 'Installation réussie');
- 	      button.disabled = false;
+            var status   = JSON.stringify(response.status);
+            var stdout   = JSON.stringify(response.stdout);
+            var combi    = status + stdout;
+            var stdoutbr = combi.replace(/(\\n)/gm, '<br>');
+            var regex    = /success/;
+            if (regex.test(status)) { 
+              document.getElementById('response-' + logiciel).style.backgroundColor = 'green';
+              document.getElementById("response-" + logiciel).textContent = 'Installation réussie';
+            } else {
+              document.getElementById('response-' + logiciel).style.backgroundColor = 'red';
+              document.getElementById("response-" + logiciel).innerHTML = stdoutbr.replace(/"failure"/, 'Erreur lors de l\'installation <br>');
             }
-	    else
-	    {
-   	      document.getElementById('response-' + logiciel).style.backgroundColor = 'red';
-              document.getElementById("response-" + logiciel).innerHTML = stdoutbr.replace(/\"failure\"\"/, 'Erreur lors de l\'installation <br>');;	      
-              button.disabled = false;
-	    }
           } else {
             alert("Erreur lors de l'installation : " + xhr.status);
           }
+          toggleButtons(logiciel, false);
+          toggleSpinner(logiciel, false);
         };
-          xhr.send();
+        xhr.send();
       }
       
       function removeSoftware(logiciel) {
-        button = document.getElementById("btrm-" + logiciel);
-        button.disabled = true;
-        console.log(button)
+        toggleButtons(logiciel, true);
+        toggleSpinner(logiciel, true);
+
         var xhr = new XMLHttpRequest();
         xhr.open("GET", "/remove?logiciel=" + encodeURIComponent(logiciel), true);
         xhr.onload = function() {
           if (xhr.status === 200) {
             var response = JSON.parse(xhr.responseText);
-            var status = JSON.stringify(response.status);
-            var stdout = JSON.stringify(response.stdout);
-	    var error = status + stdout
-	    // console.log(stdout)
-            var stdoutbr = error.replace(/(\\n)/gm, '<br>');
-            regex = new RegExp('success');
-	    if (regex.test(status))
-	    { 
-	      document.getElementById('response-' + logiciel).style.backgroundColor = 'green';
-	      document.getElementById("response-" + logiciel).textContent = status.replace(/\"success\"\"/, 'Installation réussie');
- 	      button.disabled = false;
+            var status   = JSON.stringify(response.status);
+            var stdout   = JSON.stringify(response.stdout);
+            var combi    = status + stdout;
+            var stdoutbr = combi.replace(/(\\n)/gm, '<br>');
+            var regex    = /success/;
+            if (regex.test(status)) { 
+              document.getElementById('response-' + logiciel).style.backgroundColor = 'green';
+              document.getElementById("response-" + logiciel).textContent = 'Désinstallation réussie';
+            } else {
+              document.getElementById('response-' + logiciel).style.backgroundColor = 'red';
+              document.getElementById("response-" + logiciel).innerHTML = stdoutbr.replace(/"failure"/, 'Erreur lors de la désinstallation <br>');
             }
-	    else
-	    {
-   	      document.getElementById('response-' + logiciel).style.backgroundColor = 'red';
-              document.getElementById("response-" + logiciel).innerHTML = stdoutbr.replace(/\"failure\"\"/, 'Erreur lors de l\'installation <br>');;	      
-              button.disabled = false;
-	    }
           } else {
-            alert("Erreur lors de l'installation : " + xhr.status);
+            alert("Erreur lors de la désinstallation : " + xhr.status);
           }
+          toggleButtons(logiciel, false);
+          toggleSpinner(logiciel, false);
         };
-          xhr.send();
+        xhr.send();
       }
     </script>
+  </body>
 </html>
-
-
