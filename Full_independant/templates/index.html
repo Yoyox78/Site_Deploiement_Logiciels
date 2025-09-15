@@ -38,16 +38,28 @@
         cursor: pointer;
         margin-left: 5px;
       }
-      /* Spinner */
-      .spinner {
-        display: inline-block;
-        width: 24px;
-        height: 24px;
-        border: 3px solid rgba(0, 0, 0, 0.2);
-        border-top-color: rgba(0, 0, 0, 0.8);
+      /* Spinner individuel supprimé, on utilisera spinner global */
+
+      /* Spinner global overlay */
+      #overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0,0,0,0.4);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+      }
+      #overlay .spinner {
+        width: 48px;
+        height: 48px;
+        border: 5px solid rgba(255, 255, 255, 0.3);
+        border-top-color: #fff;
         border-radius: 50%;
         animation: spin 0.6s linear infinite;
-        margin-left: 10px;
       }
       @keyframes spin {
         to { transform: rotate(360deg); }
@@ -88,8 +100,7 @@
                           onclick="removeSoftware('{{logiciels[i]}}')">
                           Supprimer
                         </button>
-                        <!-- Spinner associé au logiciel -->
-                        <span id="spinner-{{logiciels[i]}}" class="spinner hidden"></span>
+                        <!-- Plus de spinner individuel -->
                       </div>
                     </div>
                     <div class="response" id="response-{{logiciels[i]}}"></div>
@@ -102,36 +113,41 @@
         </div>
       </div>
     </div>
+
+    <!-- Overlay global avec spinner -->
+    <div id="overlay">
+      <div class="spinner"></div>
+    </div>
+
     <script>
-      // Affichage/Masquage du spinner
-      function toggleSpinner(logiciel, show) {
-        var spinner = document.getElementById("spinner-" + logiciel);
-        if (!spinner) {
-          console.error("Spinner introuvable pour", logiciel);
-          return;
-        }
+      // Afficher ou cacher overlay global
+      function toggleOverlay(show) {
+        var overlay = document.getElementById('overlay');
         if (show) {
-          spinner.classList.remove("hidden");
+          overlay.style.display = 'flex';
         } else {
-          spinner.classList.add("hidden");
+          overlay.style.display = 'none';
         }
       }
 
-      // Activation/Désactivation des boutons
-      function toggleButtons(logiciel, disable) {
-        var btnInstall = document.getElementById("bt-" + logiciel);
-        var btnRemove  = document.getElementById("btrm-" + logiciel);
-        if(btnInstall) { btnInstall.disabled = disable; }
-        if(btnRemove)  { btnRemove.disabled = disable; }
+      // Activer/Désactiver tous les boutons pour éviter double clic
+      function toggleAllButtons(disable) {
+        var buttons = document.querySelectorAll('button');
+        buttons.forEach(function(btn) {
+          btn.disabled = disable;
+        });
       }
 
       function installSoftware(logiciel) {
-        toggleButtons(logiciel, true);
-        toggleSpinner(logiciel, true);
+        toggleOverlay(true);
+        toggleAllButtons(true);
 
         var xhr = new XMLHttpRequest();
         xhr.open("GET", "/deploy?logiciel=" + encodeURIComponent(logiciel), true);
         xhr.onload = function() {
+          toggleOverlay(false);
+          toggleAllButtons(false);
+
           if (xhr.status === 200) {
             var response = JSON.parse(xhr.responseText);
             var status   = JSON.stringify(response.status);
@@ -139,29 +155,31 @@
             var combi    = status + stdout;
             var stdoutbr = combi.replace(/(\\n)/gm, '<br>');
             var regex    = /success/;
+            var respDiv = document.getElementById('response-' + logiciel);
             if (regex.test(status)) { 
-              document.getElementById('response-' + logiciel).style.backgroundColor = 'green';
-              document.getElementById("response-" + logiciel).textContent = 'Installation réussie';
+              respDiv.style.backgroundColor = 'green';
+              respDiv.textContent = 'Installation réussie';
             } else {
-              document.getElementById('response-' + logiciel).style.backgroundColor = 'red';
-              document.getElementById("response-" + logiciel).innerHTML = stdoutbr.replace(/"failure"/, 'Erreur lors de l\'installation <br>');
+              respDiv.style.backgroundColor = 'red';
+              respDiv.innerHTML = stdoutbr.replace(/"failure"/, 'Erreur lors de l\'installation <br>');
             }
           } else {
             alert("Erreur lors de l'installation : " + xhr.status);
           }
-          toggleButtons(logiciel, false);
-          toggleSpinner(logiciel, false);
         };
         xhr.send();
       }
       
       function removeSoftware(logiciel) {
-        toggleButtons(logiciel, true);
-        toggleSpinner(logiciel, true);
+        toggleOverlay(true);
+        toggleAllButtons(true);
 
         var xhr = new XMLHttpRequest();
         xhr.open("GET", "/remove?logiciel=" + encodeURIComponent(logiciel), true);
         xhr.onload = function() {
+          toggleOverlay(false);
+          toggleAllButtons(false);
+
           if (xhr.status === 200) {
             var response = JSON.parse(xhr.responseText);
             var status   = JSON.stringify(response.status);
@@ -169,18 +187,17 @@
             var combi    = status + stdout;
             var stdoutbr = combi.replace(/(\\n)/gm, '<br>');
             var regex    = /success/;
+            var respDiv = document.getElementById('response-' + logiciel);
             if (regex.test(status)) { 
-              document.getElementById('response-' + logiciel).style.backgroundColor = 'green';
-              document.getElementById("response-" + logiciel).textContent = 'Désinstallation réussie';
+              respDiv.style.backgroundColor = 'green';
+              respDiv.textContent = 'Désinstallation réussie';
             } else {
-              document.getElementById('response-' + logiciel).style.backgroundColor = 'red';
-              document.getElementById("response-" + logiciel).innerHTML = stdoutbr.replace(/"failure"/, 'Erreur lors de la désinstallation <br>');
+              respDiv.style.backgroundColor = 'red';
+              respDiv.innerHTML = stdoutbr.replace(/"failure"/, 'Erreur lors de la désinstallation <br>');
             }
           } else {
             alert("Erreur lors de la désinstallation : " + xhr.status);
           }
-          toggleButtons(logiciel, false);
-          toggleSpinner(logiciel, false);
         };
         xhr.send();
       }
